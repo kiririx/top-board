@@ -1,4 +1,4 @@
-import { app, BrowserWindow } from 'electron';
+import { app, BrowserWindow , globalShortcut } from 'electron';
 import path from 'path';
 
 // Handle creating/removing shortcuts on Windows when installing/uninstalling.
@@ -6,9 +6,11 @@ if (require('electron-squirrel-startup')) {
   app.quit();
 }
 
+let mainWindow:BrowserWindow
+
 const createWindow = () => {
   // Create the browser window.
-  const mainWindow = new BrowserWindow({
+  mainWindow = new BrowserWindow({
     width: 360,
     height: 600,
     webPreferences: {
@@ -16,6 +18,8 @@ const createWindow = () => {
     },
   });
 
+  // 设置窗口始终置顶
+  mainWindow.setAlwaysOnTop(true, 'normal');
   // and load the index.html of the app.
   if (MAIN_WINDOW_VITE_DEV_SERVER_URL) {
     mainWindow.loadURL(MAIN_WINDOW_VITE_DEV_SERVER_URL);
@@ -27,10 +31,29 @@ const createWindow = () => {
   mainWindow.webContents.openDevTools();
 };
 
+function toggleWindow() {
+  if (mainWindow.isVisible()) {
+    mainWindow.hide();
+  } else {
+    mainWindow.show();
+    mainWindow.focus(); // 确保窗口不只是显示，还获得了焦点
+  }
+}
+
 // This method will be called when Electron has finished
 // initialization and is ready to create browser windows.
 // Some APIs can only be used after this event occurs.
-app.on('ready', createWindow);
+app.on('ready', () => {
+  createWindow()
+  // 注册全局快捷键
+  const ret = globalShortcut.register('CmdOrCtrl+Shift+X', () => {
+    toggleWindow();
+  });
+
+  if (!ret) {
+    console.log('快捷键注册失败');
+  }
+});
 
 // Quit when all windows are closed, except on macOS. There, it's common
 // for applications and their menu bar to stay active until the user quits
